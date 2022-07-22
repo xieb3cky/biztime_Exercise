@@ -11,7 +11,7 @@ Return info on invoices: like { invoices: [{ id, comp_code }, ...] }
 router.get("/", async function (req, res, next) {
     try {
         const results = await db.query(
-            `SELECT * FROM invoices`);
+            `SELECT id,comp_code FROM invoices`);
 
         return res.json({ "invoices": results.rows });
     }

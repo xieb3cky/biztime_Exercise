@@ -1,12 +1,14 @@
-\c biztime
+\c biztime_test
 
 DROP TABLE IF EXISTS invoices;
 DROP TABLE IF EXISTS companies;
+DROP TABLE IF EXISTS industries;
 
 CREATE TABLE companies (
     code text PRIMARY KEY,
     name text NOT NULL UNIQUE,
     description text
+    ind_code text NOT NULL REFERENCES industry ON DELETE CASCADE
 );
 
 CREATE TABLE invoices (
@@ -28,3 +30,17 @@ INSERT INTO invoices (comp_Code, amt, paid, paid_date)
          ('apple', 200, false, null),
          ('apple', 300, true, '2018-01-01'),
          ('ibm', 400, false, null);
+
+
+/* Further study: Add a Many to Many*/
+
+CREATE TABLE industries(
+    code text PRIMARY KEY,
+    industry text NOT NULL UNIQUE
+    comp_code text NOT NULL REFERENCES companies ON DELETE CASCADE
+);
+
+INSET INTO industries (code, industry, comp_code)
+VALUES ('acct', 'Accounting', 'ibm'),
+('tech', 'Technology', 'ibm'),
+('tech', 'Technology', 'apple')

@@ -1,6 +1,6 @@
 
 const express = require("express");
-
+const slugify = require("slugify");
 const ExpressError = require("../expressError")
 
 const db = require("../db");
@@ -16,7 +16,7 @@ const router = new express.Router();
 router.get("/", async function (req, res, next) {
     try {
         const results = await db.query(
-            `SELECT * FROM companies`);
+            `SELECT code, name, description FROM companies`);
 
         return res.json({ "companies": results.rows });
     }
@@ -39,7 +39,7 @@ router.get("/:id", async function (req, res, next) {
         const comp_id = req.params.id;
 
         const comp_result = await db.query(
-            `SELECT *
+            `SELECT code, name, description
          FROM companies
          WHERE code =$1`, [comp_id]);
 
@@ -79,8 +79,8 @@ Adds a company. Needs to be given JSON like: {code, name, description} . Returns
 
 router.post("/", async function (req, res, next) {
     try {
-        const { code, name, description } = req.body;
-
+        const { name, description } = req.body;
+        let code = slugify(name, { lower: true })
         const result = await db.query(
             `INSERT INTO companies (code, name, description)
              VALUES ($1, $2, $3)
@@ -105,19 +105,19 @@ Needs to be given JSON like: {name, description} - Returns update company object
 router.patch("/:id", async function (req, res, next) {
     try {
         const { name, description } = req.body;
-
+        const id = req.params.id;
         const result = await db.query(
             `UPDATE companies SET name=$1, description=$2
-             WHERE id = $3
-             RETURNING id, name, description`,
-            [name, description, req.params.id]
+             WHERE code = $3
+             RETURNING code, name, description`,
+            [name, description, id]
         );
 
         if (result.rows.length === 0) {
-            throw new ExpressError(`Company ${name} does not exist`, 404)
+            throw new ExpressError(`Company ${id} does not exist`, 404)
         }
 
-        return res.json({ "companies": result.rows[0] });
+        return res.json({ "company": result.rows[0] });
     } catch (err) {
         return next(err);
     };
@@ -134,7 +134,8 @@ router.delete("/:id", async function (req, res, next) {
     try {
         const id = req.params.id;
         const result = await db.query(
-            "DELETE FROM companies WHERE id = $1",
+            `DELETE FROM companies WHERE code = $1
+            RETURNING code`,
             [id]
         );
         if (result.rows.length === 0) {
